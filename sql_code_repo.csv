@@ -7,7 +7,7 @@ ELSE NULL
 END AS field  ,
 CASE WHEN  `t_farmer_occupation`.`updated_at` > '2022-05-03'   THEN  `t_farmer_occupation`.`vch_occupation`
 ELSE NULL 
-END AS self
+END AS self,
 
 CASE WHEN `mpas_dump_data`.`Aadhar_No. of farmer` IS NULL THEN NULL
  	ELSE 1
