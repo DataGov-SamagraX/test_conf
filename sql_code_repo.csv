@@ -220,7 +220,7 @@ AND t_farmer_info.`vch_mobile_no` IS NOT NULL ",,1,"field,self,ama_krushi,OTP,pp
 15,Demographic Details,Secondary Mobile number,"SELECT int_secondary_mobile_number,int_krushk_id FROM `t_demographic_details` WHERE 1",,0,int_secondary_mobile_number
 16,Demographic Details,Own Mobile,"SELECT `tin_own_mobile`,`int_krushk_id` FROM `t_demographic_details`",,0,tin_own_mobile
 17,Demographic Details,Photograph,,,0,
-18,Demographic Details,Farmer Type,"SELECT vch_aadharno, vch_tahsil, vch_village, vch_khata_no, vch_plot_no,
+18,Demographic Details,Farmer Type,"SELECT int_krushk_id,vch_aadharno, vch_tahsil, vch_village, vch_khata_no, vch_plot_no,
 CASE WHEN (field/2.47) >= 10    THEN 6	
 WHEN (field/2.47) >= 4    THEN 5
 WHEN (field/2.47) >= 2    THEN 4	
@@ -264,6 +264,7 @@ ELSE NULL END AS mpas
 FROM 
 
 (SELECT DISTINCT 
+`t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -447,7 +448,7 @@ ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,vch_bank_name
 LEFT JOIN t_farmer_info 
 ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,vch_branch_name
 27,Bank Details,IFS Code,"SELECT
-int_krushk_id.t_bank_details,
+ int_krushk_id.t_bank_details,
 CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.vch_ifsc
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.vch_ifsc
 ELSE NULL 
@@ -507,6 +508,7 @@ FROM t_bank_details
 LEFT JOIN t_farmer_info 
 ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
 32,Crop Production Details,District,"SELECT DISTINCT 
+`t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -574,6 +576,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
 WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 33,Crop Production Details,Tehsil,"SELECT DISTINCT 
+`t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -630,6 +633,7 @@ AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`",,1,"field,self,ppas,bhulekh"
 34,Crop Production Details,RI Circle,,,0,
 35,Crop Production Details,Village,"SELECT DISTINCT 
+`t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -698,7 +702,7 @@ AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
 WHERE m_bhulekh_village.vch_village IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
-36,Crop Production Details,Khata No,"SELECT DISTINCT 
+36,Crop Production Details,Khata No,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -765,7 +769,7 @@ AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
 WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
-37,Crop Production Details,Plot No,"SELECT DISTINCT 
+37,Crop Production Details,Plot No,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -832,7 +836,7 @@ AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
 WHERE `t_cropping_land_details`.`vch_khata_no` IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
-38,Crop Production Details,Plot Owner Name,"SELECT DISTINCT 
+38,Crop Production Details,Plot Owner Name,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -851,7 +855,7 @@ END AS self
 FROM `t_cropping_land_details` 
 
 WHERE `t_cropping_land_details`.`vch_patta_name` IS NOT NULL",,0,"field,self"
-39,Crop Production Details,Farmer Relation with Plot Owner,"SELECT DISTINCT 
+39,Crop Production Details,Farmer Relation with Plot Owner,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -871,7 +875,7 @@ FROM `t_cropping_land_details`
 
 
 WHERE `t_cropping_land_details`.`int_relation` IS NOT NULL",,0,"field,self"
-40,Crop Production Details,Landholding Size (Acres),"SELECT DISTINCT 
+40,Crop Production Details,Landholding Size (Acres),"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -904,7 +908,7 @@ AND `bhulekh_response_data`.`plot_no` = t_cropping_land_details.`vch_plot_no`
 AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.application_id 
 
 WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,1,"field,self,bhulekh,mpas,ppas"
-41,Crop Production Details,Farmer Area under Cultivation (Acres),"SELECT DISTINCT 
+41,Crop Production Details,Farmer Area under Cultivation (Acres),"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -963,7 +967,7 @@ AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 42,Crop Production Details,Geo-coordinates,,,0,
-43,Crop Production Details,Land Type,"SELECT DISTINCT 
+43,Crop Production Details,Land Type,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -983,7 +987,7 @@ FROM `t_cropping_land_details`
 
 
 WHERE `t_cropping_land_details`.`int_land_type` IS NOT NULL",,0,"field,self"
-44,Crop Production Details,Farmer owns this land,"SELECT DISTINCT 
+44,Crop Production Details,Farmer owns this land,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -1006,7 +1010,7 @@ WHERE `t_cropping_land_details`.`int_own_land` IS NOT NULL",,0,"field,self"
 45,Crop Production Details,Kharif Crops,,,0,
 46,Crop Production Details,Rabi Crops,,,0,
 47,Crop Production Details,SummerZaid Crops,,,0,
-48,Crop Production Details,Access to Irrigation,"SELECT DISTINCT 
+48,Crop Production Details,Access to Irrigation,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
@@ -1035,7 +1039,7 @@ LEFT JOIN
 ON t_farmer_info.`vch_mobile_no` = ama_krushi.number
 
 WHERE `t_cropping_land_details`.`int_access_to_irrigation` IS NOT NULL",,1,"field,self,ama_krushi"
-49,Crop Production Details,Type of Irrigation,"SELECT DISTINCT 
+49,Crop Production Details,Type of Irrigation,"SELECT DISTINCT `t_cropping_land_details`.`int_krushk_id`,
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
