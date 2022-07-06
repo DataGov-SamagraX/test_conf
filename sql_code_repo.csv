@@ -1,17 +1,23 @@
-Srno,Parent Label,Field Name,SQL Code,Comments,Columns_list
-1,Demographic Details,Farmer's Occupation,"SELECT 
+SrNo,Parent Label,Field Name,SQL Code,Comments,Multiple_confidence_columns,Columns_list
+1,Demographic Details,Farmer Occupation,"SELECT 
 `t_farmer_occupation`.`int_krushk_id`,
 `t_farmer_info`.`vch_aadharno`,
-`t_farmer_occupation`.`vch_occupation`,
+CASE WHEN `t_farmer_occupation`.`updated_at` <= '2022-05-03'   THEN  `t_farmer_occupation`.`vch_occupation`
+ELSE NULL 
+END AS field  ,
+CASE WHEN  `t_farmer_occupation`.`updated_at` > '2022-05-03'   THEN  `t_farmer_occupation`.`vch_occupation`
+ELSE NULL 
+END AS self
+
 CASE WHEN `mpas_dump_data`.`Aadhar_No. of farmer` IS NULL THEN NULL
  	ELSE 1
-END as `Mpas_vch_occupation`,
+END as `mpas`,
 CASE WHEN `ppas_dump_data`.`AADHAARNO` IS NULL THEN NULL
 	ELSE 1 
-END as `ppas_vch_occupation`,
+END as `ppas`,
 CASE WHEN `bhulekh_response_data`.`vch_aadharno` IS NULL THEN NULL 
 ELSE 1 
-END AS `bhulekh_vch_occupation`
+END AS `bhulekh`
 
 FROM `t_farmer_occupation` 
 LEFT JOIN t_farmer_info
@@ -38,78 +44,113 @@ AND `bhulekh_response_data`.`plot_no` = t_cropping_land_details.`vch_plot_no`
 
 ON `t_farmer_info`.`vch_aadharno` =  `bhulekh_response_data`.`vch_aadharno`
 
-WHERE `t_farmer_occupation`.`vch_occupation` IS NOT NULL",Multiple occupation value for same adhar in KO,"int_krushk_id,vch_aadharno,vch_occupation,Mpas_vch_occupation,ppas_vch_occupation,bhulekh_vch_occupation"
-2,Demographic Details,Type of Agricultural Labourer,"SELECT `int_krushk_id`,
-CASE WHEN `last_update_on` <= ""2022-05-03""   THEN  `tin_type_of_labourer` 
+WHERE `t_farmer_occupation`.`vch_occupation` IS NOT NULL",Multiple occupation value for same adhar in KO,1,"field,self,mpas,ppas,bhulekh"
+2,Demographic Details,Type of Agricultural Labourer,"SELECT DISTINCT `int_krushk_id`,
+CASE WHEN `last_update_on` <= '2022-05-03'   THEN  `tin_type_of_labourer` 
 ELSE NULL 
-END AS tin_type_of_labourer_field  ,
-CASE WHEN `last_update_on` > ""2022-05-03""   THEN  `tin_type_of_labourer` 
+END AS field  ,
+CASE WHEN `last_update_on` > '2022-05-03'   THEN  `tin_type_of_labourer` 
 ELSE NULL 
-END AS tin_type_of_labourer_self
+END AS self
 FROM `t_demographic_details` 
-WHERE tin_type_of_labourer IS NOT NULL",,"int_krushk_id,tin_type_of_labourer_field,tin_type_of_labourer_self"
-3,Demographic Details,Type of Crop Cultivator,-,,
+WHERE tin_type_of_labourer IS NOT NULL",,0,"field,self"
+3,Demographic Details,Type of Crop Cultivator,"SELECT DISTINCT  t_farmer_cultivator_type.int_krushk_id,
+ 
+ CASE WHEN  `t_farmer_cultivator_type`.`updated_at` <= '2022-05-03'  THEN `t_farmer_cultivator_type`.`vch_cultivator_type`
+WHEN `t_farmer_cultivator_type`.`updated_at` IS NULL   THEN  `t_farmer_cultivator_type`.`vch_cultivator_type`
+ELSE NULL 
+END AS field  ,
+
+CASE WHEN `t_farmer_cultivator_type`.`updated_at` > '2022-05-03'   THEN  `t_farmer_cultivator_type`.`vch_cultivator_type`
+ELSE NULL 
+END AS self,
+
+
+CASE WHEN `ppas_dump_data`.`AADHAARNO` IS NOT NULL   THEN  1
+ELSE NULL 
+END AS ppas,
+
+mpas_dump_data.type_crop_cultivator as mpas FROM t_farmer_cultivator_type
+
+LEFT JOIN t_farmer_info 
+ON t_farmer_cultivator_type.int_krushk_id = t_farmer_info.int_krushk_id
+
+
+LEFT JOIN (SELECT DISTINCT `ppas_dump_data`.`AADHAARNO` FROM `ppas_dump_data`) as ppas_dump_data
+ON `t_farmer_info`.`vch_aadharno` = `ppas_dump_data`.`AADHAARNO`
+
+LEFT JOIN (SELECT DISTINCT `Aadhar_No. of farmer`,
+CASE WHEN `Farmer is Owner of the land or share cropper` = 'OWNER' THEN 1
+ELSE 2  END AS `type_crop_cultivator` FROM `mpas_dump_data`) as mpas_dump_data
+ON `t_farmer_info`.`vch_aadharno` = `mpas_dump_data`.`Aadhar_No. of farmer`",,1,"field,self,mpas,ppas"
 4,Demographic Details,Activities,"SELECT t_farmer_activities.`int_krushk_id`,
 t_farmer_info.vch_aadharno,
-t_farmer_activities.`vch_activity` ,
+CASE WHEN t_farmer_activities.`updated_at` <= '2022-05-03'   THEN  t_farmer_activities.`vch_activity`
+ELSE NULL 
+END AS field  ,
+CASE WHEN t_farmer_activities.`updated_at` > '2022-05-03'   THEN  t_farmer_activities.`vch_activity`
+ELSE NULL 
+END AS self,
+
 CASE WHEN `mpas_dump_data`.`Aadhar_No. of farmer` IS NULL THEN NULL
  	ELSE 1
-END as `Mpas_activity`,
+END as `mpas`,
 CASE WHEN `ppas_dump_data`.`AADHAARNO` IS NULL THEN NULL
 	ELSE 1 
-END AS `ppas_activity`
+END AS `ppas`
 FROM `t_farmer_activities` LEFT JOIN t_farmer_info
 ON `t_farmer_activities`.`int_krushk_id` = `t_farmer_info`.`int_krushk_id`
 LEFT JOIN (SELECT DISTINCT `mpas_dump_data`.`Aadhar_No. of farmer` FROM `mpas_dump_data`) as mpas_dump_data
 ON `t_farmer_info`.`vch_aadharno` = `mpas_dump_data`.`Aadhar_No. of farmer`
 LEFT JOIN (SELECT DISTINCT `ppas_dump_data`.`AADHAARNO` FROM `ppas_dump_data`) as ppas_dump_data
 ON `t_farmer_info`.`vch_aadharno` = `ppas_dump_data`.`AADHAARNO`
-WHERE t_farmer_activities.`vch_activity` IS NOT NULL",,"int_krushk_id,vch_aadharno,vch_activity,Mpas_activity,ppas_activity"
-5,Demographic Details,Application Number,"SELECT `int_krushk_id`,`vch_aadharno`,`vch_application_no` FROM `t_farmer_info` ",,"int_krushk_id,vch_aadharno,vch_application_no"
-6,Demographic Details,Aadhaar No,SELECT `vch_aadharno` FROM `t_farmer_info` ,,vch_aadharno
-7,Demographic Details,Farmer Name (As per Aadhaar),SELECT `vch_farmer_name` FROM `t_farmer_info` WHERE 1,, vch_farmer_name
+WHERE t_farmer_activities.`vch_activity` IS NOT NULL",,1,"field,self,mpas,ppas"
+5,Demographic Details,Application Number,"SELECT `int_krushk_id`,`vch_aadharno`,`vch_application_no` FROM `t_farmer_info` ",,0,vch_application_no
+6,Demographic Details,Aadhaar No,"SELECT DISTINCT `int_krushk_id`,`vch_aadharno` FROM `t_farmer_info` 
+",,0,vch_aadharno
+7,Demographic Details,Farmer Name (As per Aadhaar),"SELECT DISTINCT `int_krushk_id`,`vch_farmer_name` FROM `t_farmer_info` ",,0, vch_farmer_name
 8,Demographic Details,Gender,"SELECT `int_krushk_id`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  `tin_gender` 
-ELSE NULL 
-END AS tin_gender_field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  `tin_gender` 
-ELSE NULL 
-END AS tin_gender_Aadhar
-FROM `t_farmer_info` 
-WHERE `tin_gender`   IS NOT NULL",,"int_krushk_id,tin_gender_Aadhar,tin_gender_field"
-9,Demographic Details,Day of Birth,"SELECT `int_krushk_id`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  `int_dob_date`
-ELSE NULL 
-END AS dob_date_field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  `int_dob_date`
-ELSE NULL 
-END AS dob_date_Aadhar
-FROM `t_farmer_info` 
-WHERE `int_dob_date`   IS NOT NULL",,"int_krushk_id,dob_date_Aadhar,dob_date_field"
-10,Demographic Details,Month of Birth,"SELECT `int_krushk_id`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  `int_dob_month`
-ELSE NULL 
-END AS dob_mont_field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  `int_dob_month`
-ELSE NULL 
-END AS dob_month_Aadhar
-FROM `t_farmer_info` 
-WHERE `int_dob_month`   IS NOT NULL",,"int_krushk_id,dob_month_Aadhar,dob_mont_field"
-11,Demographic Details,Year of Birth,"SELECT `int_krushk_id`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  `int_dob_year`
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  `tin_gender` 
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  `int_dob_year`
+CASE WHEN `updated_at` > '2202-05-03'   THEN  `tin_gender` 
 ELSE NULL 
 END AS self
 FROM `t_farmer_info` 
-WHERE `int_dob_year`   IS NOT NULL",,"int_krushk_id,self,field"
-12,Demographic Details,Social Category,"SELECT t_demographic_details.`int_krushk_id`,
-t_demographic_details.`vch_aadharno`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  t_demographic_details.`int_category`
+WHERE `tin_gender`   IS NOT NULL",,1,"tin_gender_field,tin_gender_field"
+9,Demographic Details,Day of Birth,"SELECT DISTINCT `int_krushk_id`,
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  `int_dob_date`
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  t_demographic_details.`int_category`
+CASE WHEN `updated_at` > '2202-05-03'   THEN  `int_dob_date`
+ELSE NULL 
+END AS Aadhar
+FROM `t_farmer_info` 
+WHERE `int_dob_date`   IS NOT NULL",,0,"field,Aadhar"
+10,Demographic Details,Month of Birth,"SELECT `int_krushk_id`,
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  `int_dob_month`
+ELSE NULL 
+END AS field  ,
+CASE WHEN `updated_at` > '2202-05-03'   THEN  `int_dob_month`
+ELSE NULL 
+END AS Aadhar
+FROM `t_farmer_info` 
+WHERE `int_dob_month`   IS NOT NULL",,0,"field,Aadhar"
+11,Demographic Details,Year of Birth,"SELECT `int_krushk_id`,
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  `int_dob_year`
+ELSE NULL 
+END AS field  ,
+CASE WHEN `updated_at` > '2202-05-03'   THEN  `int_dob_year`
+ELSE NULL 
+END AS Aadhar
+FROM `t_farmer_info` 
+WHERE `int_dob_year`   IS NOT NULL",,0,"field,Aadhar"
+12,Demographic Details,Social Category,"SELECT t_demographic_details.`int_krushk_id`,
+t_demographic_details.`vch_aadharno`,
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  t_demographic_details.`int_category`
+ELSE NULL 
+END AS field  ,
+CASE WHEN `updated_at` > '2202-05-03'   THEN  t_demographic_details.`int_category`
 ELSE NULL 
 END AS self,
 ppas_dump_data.`ppas_caste` as ppas
@@ -125,24 +166,24 @@ LEFT JOIN
 WHERE `Framer_Category` IS NOT NULL
 ) as ppas_dump_data
 ON `t_demographic_details`.`vch_aadharno` = `ppas_dump_data`.`AADHAARNO`
-WHERE t_demographic_details.`int_category` IS NOT NULL",,"int_krushk_id,vch_aadharno,field,self,ppas"
+WHERE t_demographic_details.`int_category` IS NOT NULL",,1,"field,self,ppas"
 13,Demographic Details,Marital Status,"SELECT t_demographic_details.`int_krushk_id`,
 t_demographic_details.`vch_aadharno`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN  t_demographic_details.`int_marital_status`
+CASE WHEN `updated_at` <= '2202-05-03'   THEN  t_demographic_details.`int_marital_status`
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  t_demographic_details.`int_marital_status`
+CASE WHEN `updated_at` > '2202-05-03'   THEN  t_demographic_details.`int_marital_status`
 ELSE NULL 
 END AS self
 FROM `t_demographic_details` 
-WHERE  t_demographic_details.`int_marital_status` IS NOT NULL",,
+WHERE  t_demographic_details.`int_marital_status` IS NOT NULL",,0,
 14,Demographic Details,Primary Mobile number,"SELECT 
 `t_farmer_info`.`vch_aadharno`,
 `t_farmer_info`.`int_krushk_id`,
-CASE WHEN `t_farmer_info`.`updated_at` <= ""2022-05-03""   THEN  `t_farmer_info`.`vch_mobile_no`
+CASE WHEN `t_farmer_info`.`updated_at` <= '2202-05-03'   THEN  `t_farmer_info`.`vch_mobile_no`
 	ELSE NULL 
 END AS field  ,
-CASE WHEN `t_farmer_info`.`updated_at` > ""2022-05-03""   THEN `t_farmer_info`.`vch_mobile_no`
+CASE WHEN `t_farmer_info`.`updated_at` > '2202-05-03'   THEN `t_farmer_info`.`vch_mobile_no`
 	ELSE NULL 
 END AS self,
 
@@ -175,10 +216,10 @@ LEFT JOIN (SELECT DISTINCT `Mobile No`,`Aadhar_No. of farmer` FROM `mpas_dump_da
 ON  `t_farmer_info`.`vch_aadharno`=`mpas_dump_data`.`Aadhar_No. of farmer`
 
 WHERE t_farmer_info.`vch_aadharno` <> ""999999999999""
-AND t_farmer_info.`vch_mobile_no` IS NOT NULL ",,"int_krushk_id,field,self,ama_krushi,OTP,ppas,Mobile No"
-15,Demographic Details,Secondary Mobile number,"SELECT int_secondary_mobile_number,int_krushk_id FROM `t_demographic_details` WHERE 1",,"int_secondary_mobile_number,int_krushk_id"
-16,Demographic Details,Own Mobile,"SELECT `tin_own_mobile`,`int_krushk_id` FROM `t_demographic_details`",,"tin_own_mobile,int_krushk_id"
-17,Demographic Details,Photograph,,,
+AND t_farmer_info.`vch_mobile_no` IS NOT NULL ",,1,"field,self,ama_krushi,OTP,ppas"
+15,Demographic Details,Secondary Mobile number,"SELECT int_secondary_mobile_number,int_krushk_id FROM `t_demographic_details` WHERE 1",,0,int_secondary_mobile_number
+16,Demographic Details,Own Mobile,"SELECT `tin_own_mobile`,`int_krushk_id` FROM `t_demographic_details`",,0,tin_own_mobile
+17,Demographic Details,Photograph,,,0,
 18,Demographic Details,Farmer Type,"SELECT vch_aadharno, vch_tahsil, vch_village, vch_khata_no, vch_plot_no,
 CASE WHEN (field/2.47) >= 10    THEN 6	
 WHEN (field/2.47) >= 4    THEN 5
@@ -228,10 +269,10 @@ FROM
 `t_cropping_land_details`.`vch_village`,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` <= '2202-05-03'   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` > '2202-05-03'   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS self,
 ROUND(`bhulekh_response_data`.`area_in_acre`,1) as bhulekh,
@@ -246,7 +287,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
---  and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -260,7 +301,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`, `mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
--- and `Khata No` = 45 
+
 GROUP BY 1,2,3) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -271,7 +312,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 GROUP BY 1,2,3
 
 ) ppas_dump_data
@@ -279,20 +320,20 @@ GROUP BY 1,2,3
 ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
-WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL) base ",,"vch_aadharno,vch_tahsil,vch_village,vch_khata_no,vch_plot_no,field,self,bhulekh,ppas,mpas"
+WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL) base ",,1,"field,self,bhulekh,ppas,mpas"
 19,Demographic Details,Other Profession,"SELECT `t_farmer_other_profession`.`int_krushk_id`,
-CASE WHEN `updated_at` <= ""2022-05-03"" THEN `vch_profession`
+CASE WHEN `updated_at` <= '2202-05-03' THEN `vch_profession`
 WHEN `updated_at` IS NULL THEN `vch_profession`
 ELSE NULL END AS field , 
-CASE WHEN `updated_at` > ""2022-05-03"" THEN `vch_profession` ELSE NULL END AS self 
-FROM `t_farmer_other_profession` WHERE `vch_profession` IS NOT NULL",,"int_krushk_id,field,self"
+CASE WHEN `updated_at` > '2202-05-03' THEN `vch_profession` ELSE NULL END AS self 
+FROM `t_farmer_other_profession` WHERE `vch_profession` IS NOT NULL",,0,"field,self"
 20,Residential Address,District,"SELECT t_demographic_details.`int_krushk_id`,
 t_demographic_details.`vch_aadharno`,
-CASE WHEN `t_demographic_details`.`updated_at` <= ""2022-05-03""   THEN  lower(m_district.vch_district_name)
+CASE WHEN `t_demographic_details`.`updated_at` <= '2202-05-03'   THEN  lower(m_district.vch_district_name)
 WHEN `t_demographic_details`.`updated_at` IS NULL   THEN  lower(m_district.vch_district_name)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `t_demographic_details`.`updated_at` > ""2022-05-03""   THEN  lower(m_district.vch_district_name)
+CASE WHEN `t_demographic_details`.`updated_at` > '2202-05-03'   THEN  lower(m_district.vch_district_name)
 ELSE NULL 
 END AS self,
 lower(mpas_dump_data.`District Name`) AS mpas,
@@ -316,14 +357,14 @@ ON `t_demographic_details`.`vch_aadharno` = nfsa_one.`aadhaar`
 
 WHERE `t_demographic_details`.`vch_district` IS NOT NULL
 AND `t_demographic_details`.`vch_aadharno` IS NOT NULL
-AND  `m_district`.`vch_district_name` IS NOT NULL",,"vch_aadharno,int_krushk_id,field,self,mpas,ppas,ppas"
-21,Residential Address,Block/NAC/ULB,"SELECT DISTINCT t_demographic_details.`int_krushk_id`,
+AND  `m_district`.`vch_district_name` IS NOT NULL",,1,"field,self,mpas,ppas"
+21,Residential Address,"Block,NAC,ULB","SELECT DISTINCT t_demographic_details.`int_krushk_id`,
 t_demographic_details.`vch_aadharno`,
-CASE WHEN `t_demographic_details`.`updated_at` <= ""2022-05-03""   THEN  lower(`m_block`.`vch_block_name`)
+CASE WHEN `t_demographic_details`.`updated_at` <= '2202-05-03'   THEN  lower(`m_block`.`vch_block_name`)
 WHEN `t_demographic_details`.`updated_at` IS NULL   THEN  lower(`m_block`.`vch_block_name`)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `t_demographic_details`.`updated_at` > ""2022-05-03""   THEN  lower(`m_block`.`vch_block_name`)
+CASE WHEN `t_demographic_details`.`updated_at` > '2202-05-03'   THEN  lower(`m_block`.`vch_block_name`)
 ELSE NULL 
 END AS self,
 lower(mpas_dump_data.`FARMER_BLOCKNAME`) AS mpas,
@@ -341,14 +382,14 @@ ON `t_demographic_details`.`vch_aadharno` = nfsa_one.`aadhaar`
 
 WHERE `t_demographic_details`.`vch_block_ulb` IS NOT NULL
 AND `t_demographic_details`.`vch_aadharno` IS NOT NULL
-AND  `m_block`.`vch_block_name` IS NOT NULL ",,
-22,Residential Address,Gram Panchayat/Ward,"SELECT DISTINCT t_demographic_details.`int_krushk_id`,
+AND  `m_block`.`vch_block_name` IS NOT NULL ",,1,"field,self,mpas,nfsa"
+22,Residential Address,"Gram Panchayat,Ward","SELECT DISTINCT t_demographic_details.`int_krushk_id`,
 t_demographic_details.`vch_aadharno`,
-CASE WHEN `t_demographic_details`.`updated_at` <= ""2022-05-03""   THEN  lower(`m_gp_ward`.`vch_gp_ward`)
+CASE WHEN `t_demographic_details`.`updated_at` <= '2202-05-03'   THEN  lower(`m_gp_ward`.`vch_gp_ward`)
 WHEN `t_demographic_details`.`updated_at` IS NULL   THEN  lower(`m_gp_ward`.`vch_gp_ward`)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `t_demographic_details`.`updated_at` > ""2022-05-03""   THEN  lower(`m_gp_ward`.`vch_gp_ward`)
+CASE WHEN `t_demographic_details`.`updated_at` > '2202-05-03'   THEN  lower(`m_gp_ward`.`vch_gp_ward`)
 ELSE NULL 
 END AS self,
 lower(mpas_dump_data.`GP Name`) AS mpas,
@@ -366,14 +407,14 @@ ON `t_demographic_details`.`vch_aadharno` = nfsa_one.`aadhaar`
 
 WHERE `t_demographic_details`.`vch_gp_ward` IS NOT NULL
 AND `t_demographic_details`.`vch_aadharno` IS NOT NULL
-AND  `m_gp_ward`.`vch_gp_ward` IS NOT NULL",,
+AND  `m_gp_ward`.`vch_gp_ward` IS NOT NULL",,1,"field,self,mpas,nfsa"
 23,Residential Address,Village,"SELECT DISTINCT t_demographic_details.`int_krushk_id`,
 t_demographic_details.`vch_aadharno`,
-CASE WHEN `t_demographic_details`.`updated_at` <= ""2022-05-03""   THEN  lower(m_village.`vch_village`)
+CASE WHEN `t_demographic_details`.`updated_at` <= '2202-05-03'   THEN  lower(m_village.`vch_village`)
 WHEN `t_demographic_details`.`updated_at` IS NULL   THEN  lower(m_village.`vch_village`)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `t_demographic_details`.`updated_at` > ""2022-05-03""   THEN  lower(m_village.`vch_village`)
+CASE WHEN `t_demographic_details`.`updated_at` > '2202-05-03'   THEN  lower(m_village.`vch_village`)
 ELSE NULL 
 END AS self,
 lower(`mpas_dump_data`.`village`) AS mpas,
@@ -397,74 +438,74 @@ ON `t_demographic_details`.`vch_aadharno` = nfsa_one.`aadhaar`
 
 WHERE t_demographic_details.`vch_village` IS NOT NULL
 AND `t_demographic_details`.`vch_aadharno` IS NOT NULL
-AND  m_village.`vch_village` IS NOT NULL ",,
-24,Residential Address,Address,"SELECT DISTINCT t_farmer_info.int_krushk_id,vch_address FROM  t_farmer_info",,
+AND  m_village.`vch_village` IS NOT NULL ",,1,"field,self,mpas,nfsa,ppas"
+24,Residential Address,Address,"SELECT DISTINCT t_farmer_info.int_krushk_id,vch_address FROM  t_farmer_info",,0,vch_address
 25,Bank Details,Bank Name,"SELECT DISTINCT t_bank_details.vch_bank_name,t_bank_details.int_krushk_id FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,vch_bank_name
 26,Bank Details,Branch Name,"SELECT DISTINCT t_bank_details.vch_branch_name,t_bank_details.int_krushk_id FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,vch_branch_name
 27,Bank Details,IFS Code,"SELECT
 int_krushk_id.t_bank_details,
-CASE WHEN t_bank_details.updated_at <= ""2022-05-03""   THEN  t_bank_details.vch_ifsc
+CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.vch_ifsc
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.vch_ifsc
 ELSE NULL 
 END AS field  ,
-CASE WHEN t_bank_details.updated_at > ""2022-05-03""   THEN  t_bank_details.vch_ifsc
+CASE WHEN t_bank_details.updated_at > '2202-05-03'   THEN  t_bank_details.vch_ifsc
 ELSE NULL 
 END AS self
 FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
 28,Bank Details,Account Number,"SELECT
 int_krushk_id.t_bank_details,
-CASE WHEN t_bank_details.updated_at <= ""2022-05-03""   THEN  t_bank_details.`vch_account_number`
+CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.`vch_account_number`
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.`vch_account_number`
 ELSE NULL 
 END AS field  ,
-CASE WHEN t_bank_details.updated_at > ""2022-05-03""   THEN  t_bank_details.`vch_account_number`
+CASE WHEN t_bank_details.updated_at > '2202-05-03'   THEN  t_bank_details.`vch_account_number`
 ELSE NULL 
 END AS self
 FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
-29,Bank Details,Account-holder Name (As per bank),"SELECT
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
+29,Bank Details,Account holder Name,"SELECT
 int_krushk_id.t_bank_details,
-CASE WHEN t_bank_details.updated_at <= ""2022-05-03""   THEN  t_bank_details.`vch_accountholder_name`
+CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.`vch_accountholder_name`
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.`vch_accountholder_name`
 ELSE NULL 
 END AS field  ,
-CASE WHEN t_bank_details.updated_at > ""2022-05-03""   THEN  t_bank_details.`vch_accountholder_name`
+CASE WHEN t_bank_details.updated_at > '2202-05-03'   THEN  t_bank_details.`vch_accountholder_name`
 ELSE NULL 
 END AS self
 FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
 30,Bank Details,Nature of Account,"SELECT
 int_krushk_id.t_bank_details,
-CASE WHEN t_bank_details.updated_at <= ""2022-05-03""   THEN  t_bank_details.`int_nature_of_account`
+CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.`int_nature_of_account`
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.`int_nature_of_account`
 ELSE NULL 
 END AS field  ,
-CASE WHEN t_bank_details.updated_at > ""2022-05-03""   THEN  t_bank_details.`int_nature_of_account`
+CASE WHEN t_bank_details.updated_at > '2202-05-03'   THEN  t_bank_details.`int_nature_of_account`
 ELSE NULL 
 END AS self
 FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
-31,Bank Details,Account holder's relationship with Farmer,"SELECT
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
+31,Bank Details,Account holder relationship with Farmer,"SELECT
 int_krushk_id.t_bank_details,
-CASE WHEN t_bank_details.updated_at <= ""2022-05-03""   THEN  t_bank_details.`int_own_account`
+CASE WHEN t_bank_details.updated_at <= '2202-05-03'   THEN  t_bank_details.`int_own_account`
 WHEN t_bank_details.updated_at IS NULL   THEN  t_bank_details.`int_own_account`
 ELSE NULL 
 END AS field  ,
-CASE WHEN t_bank_details.updated_at > ""2022-05-03""   THEN  t_bank_details.`int_own_account`
+CASE WHEN t_bank_details.updated_at > '2202-05-03'   THEN  t_bank_details.`int_own_account`
 ELSE NULL 
 END AS self
 FROM t_bank_details
 LEFT JOIN t_farmer_info 
-ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
+ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,0,"field,self"
 32,Crop Production Details,District,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -472,12 +513,12 @@ ON t_bank_details.int_krushk_id = t_farmer_info.t_farmer_info",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN lower(m_bhulekh_district.vch_district)
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN lower(m_bhulekh_district.vch_district)
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  lower(m_bhulekh_district.vch_district)
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  lower(m_bhulekh_district.vch_district)
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  lower(m_bhulekh_district.vch_district)
 ELSE NULL 
 END AS self,
 CASE WHEN `bhulekh_response_data`.`dist_code`  IS NOT NULL THEN lower(m_bhulekh_district.vch_district) 
@@ -498,7 +539,6 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
- -- and   khata_no = 45
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -512,7 +552,6 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`, mpas_dump_data.`District Name`,`mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
- -- and `Khata No` = 45 
 GROUP BY 1,2,3,4) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -523,7 +562,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,ppas_dump_data.`Districtname`, AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 
 GROUP BY 1,2,3,4
 
@@ -533,7 +572,7 @@ ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
-WHERE m_bhulekh_district.vch_district IS NOT NULL",,
+WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 33,Crop Production Details,Tehsil,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -541,12 +580,12 @@ WHERE m_bhulekh_district.vch_district IS NOT NULL",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= """"2022-05-03""""  THEN lower(m_bhulekh_tahsil.int_tahsil_code)
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""'2202-05-03'""  THEN lower(m_bhulekh_tahsil.int_tahsil_code)
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  lower(m_bhulekh_tahsil.int_tahsil_code)
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > """"2022-05-03""""   THEN  lower(m_bhulekh_tahsil.int_tahsil_code)
+CASE WHEN `t_cropping_land_details`.`updated_at` > ""'2202-05-03'""   THEN  lower(m_bhulekh_tahsil.int_tahsil_code)
 ELSE NULL 
 END AS self,
 CASE WHEN `bhulekh_response_data`.`tehsil_code` IS NOT NULL THEN lower(m_bhulekh_tahsil.int_tahsil_code) 
@@ -565,7 +604,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
---  and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -580,7 +619,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,TahasilName, AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `TahasilName` IS NOT NULL
--- AND KhataNo = 45
+
 
 GROUP BY 1,2,3,4
 
@@ -588,8 +627,8 @@ GROUP BY 1,2,3,4
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
-AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`",,
-34,Crop Production Details,RI Circle,,,
+AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`",,1,"field,self,ppas,bhulekh"
+34,Crop Production Details,RI Circle,,,0,
 35,Crop Production Details,Village,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -597,12 +636,12 @@ AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN lower(m_bhulekh_village.vch_village)
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN lower(m_bhulekh_village.vch_village)
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  lower(m_bhulekh_village.vch_village)
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  lower(m_bhulekh_village.vch_village)
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  lower(m_bhulekh_village.vch_village)
 ELSE NULL 
 END AS self,
 CASE WHEN `bhulekh_response_data`.`dist_code`  IS NOT NULL THEN lower(m_bhulekh_district.vch_district) 
@@ -623,7 +662,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
- -- and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -637,7 +676,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`, mpas_dump_data.`Village Name`,`mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
- -- and `Khata No` = 45 
+
 GROUP BY 1,2,3,4) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -648,7 +687,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,ppas_dump_data.`Villagename`, AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 
 GROUP BY 1,2,3,4
 
@@ -658,7 +697,7 @@ ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
-WHERE m_bhulekh_district.vch_district IS NOT NULL",,
+WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 36,Crop Production Details,Khata No,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -666,12 +705,12 @@ WHERE m_bhulekh_district.vch_district IS NOT NULL",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`vch_khata_no`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`vch_khata_no`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`vch_khata_no`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`vch_khata_no`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`vch_khata_no`
 ELSE NULL 
 END AS self,
 CASE WHEN  `bhulekh_response_data`.`plot_no`  IS NOT NULL THEN `t_cropping_land_details`.`vch_khata_no`
@@ -690,7 +729,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
- -- and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -704,7 +743,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`,`mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
- -- and `Khata No` = 45 
+
 GROUP BY 1,2,3,4) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -715,7 +754,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,ppas_dump_data.`Villagename`, AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 
 GROUP BY 1,2,3,4
 
@@ -725,7 +764,7 @@ ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
-WHERE m_bhulekh_district.vch_district IS NOT NULL",,
+WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 37,Crop Production Details,Plot No,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -733,12 +772,12 @@ WHERE m_bhulekh_district.vch_district IS NOT NULL",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`vch_plot_no`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`vch_plot_no`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`vch_plot_no`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`vch_plot_no`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`vch_plot_no`
 ELSE NULL 
 END AS self,
 CASE WHEN  `bhulekh_response_data`.`plot_no`  IS NOT NULL THEN `t_cropping_land_details`.`vch_plot_no`
@@ -757,7 +796,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
- -- and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -771,7 +810,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`,`mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
- -- and `Khata No` = 45 
+
 GROUP BY 1,2,3,4) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -782,7 +821,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,ppas_dump_data.`Villagename`, AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 
 GROUP BY 1,2,3,4
 
@@ -792,7 +831,7 @@ ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
 
-WHERE m_bhulekh_district.vch_district IS NOT NULL",,
+WHERE m_bhulekh_district.vch_district IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
 38,Crop Production Details,Plot Owner Name,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -800,48 +839,48 @@ WHERE m_bhulekh_district.vch_district IS NOT NULL",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`vch_patta_name`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`vch_patta_name`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`vch_patta_name`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`vch_patta_name`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`vch_patta_name`
 ELSE NULL 
 END AS self
 
 FROM `t_cropping_land_details` 
 
-WHERE `t_cropping_land_details`.`vch_patta_name` IS NOT NULL",,
-39,Crop Production Details,Farmer's Relation with Plot Owner,"SELECT DISTINCT 
+WHERE `t_cropping_land_details`.`vch_patta_name` IS NOT NULL",,0,"field,self"
+39,Crop Production Details,Farmer Relation with Plot Owner,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`int_relation`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`int_relation`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`int_relation`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`int_relation`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`int_relation`
 ELSE NULL 
 END AS self
 
 FROM `t_cropping_land_details` 
 
 
-WHERE `t_cropping_land_details`.`int_relation` IS NOT NULL",,
+WHERE `t_cropping_land_details`.`int_relation` IS NOT NULL",,0,"field,self"
 40,Crop Production Details,Landholding Size (Acres),"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` <= '2202-05-03'   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` > '2202-05-03'   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS self,
 ROUND(`bhulekh_response_data`.`existing_landshare_in_acre`,1) as bhulekh,
@@ -853,7 +892,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`existing_landshare_in_acre`) as `existing_landshare_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`existing_landshare_in_acre` IS NOT NULL
- -- and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -864,17 +903,17 @@ AND `bhulekh_response_data`.`khata_no` = t_cropping_land_details.`vch_khata_no`
 AND `bhulekh_response_data`.`plot_no` = t_cropping_land_details.`vch_plot_no`
 AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.application_id 
 
-WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,
-41,Crop Production Details,Farmer's Area under Cultivation (Acres),"SELECT DISTINCT 
+WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,1,"field,self,bhulekh,mpas,ppas"
+41,Crop Production Details,Farmer Area under Cultivation (Acres),"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
-CASE WHEN `updated_at` <= ""2022-05-03""   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` <= '2202-05-03'   THEN ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS field  ,
-CASE WHEN `updated_at` > ""2022-05-03""   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
+CASE WHEN `updated_at` > '2202-05-03'   THEN  ROUND(`t_cropping_land_details`.`float_landholding_size`,1)
 ELSE NULL 
 END AS self,
 ROUND(`bhulekh_response_data`.`area_in_acre`,1) as bhulekh,
@@ -889,7 +928,7 @@ LEFT JOIN
  `bhulekh_response_data`.`khata_no` ,`bhulekh_response_data`.`plot_no`,AVG(`bhulekh_response_data`.`area_in_acre`) as `area_in_acre`
  FROM `bhulekh_response_data`
  WHERE `bhulekh_response_data`.`area_in_acre` IS NOT NULL
---  and   khata_no = 45
+
  GROUP BY 1,2,3,4,5,6
  ) `bhulekh_response_data`
     
@@ -903,7 +942,7 @@ AND `t_cropping_land_details`.`vch_application_no` =`bhulekh_response_data`.appl
 LEFT JOIN 
 (SELECT mpas_dump_data.`Aadhar_No. of farmer`,`Khata No`, `mpas_dump_data`.`Plot No`, AVG(`mpas_dump_data`.`Area in Acre`)AS `Area in Acre` FROM mpas_dump_data
 WHERE `mpas_dump_data`.`Area in Acre` IS NOT NULL
--- and `Khata No` = 45 
+
 GROUP BY 1,2,3) mpas_dump_data
 
 ON `t_cropping_land_details`.`vch_aadharno` =  `mpas_dump_data`.`Aadhar_No. of farmer`
@@ -914,7 +953,7 @@ AND `t_cropping_land_details`.`vch_plot_no` = `mpas_dump_data`.`Plot No`
 LEFT JOIN 
 (SELECT `PlotNo`,`KhataNo`,`AADHAARNO`,AVG(`Tot_Area`) as `Tot_Area`  FROM ppas_dump_data 
 WHERE `Tot_Area` IS NOT NULL
--- AND KhataNo = 45
+
 GROUP BY 1,2,3
 
 ) ppas_dump_data
@@ -922,8 +961,8 @@ GROUP BY 1,2,3
 ON `t_cropping_land_details`.`vch_aadharno` =  `ppas_dump_data`.`AADHAARNO`
 AND  `t_cropping_land_details`.`vch_khata_no` = `ppas_dump_data`.`KhataNo`
 AND `t_cropping_land_details`.`vch_plot_no` = `ppas_dump_data`.`PlotNo`
-WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,
-42,Crop Production Details,Geo-coordinates,,,
+WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,1,"field,self,mpas,ppas,bhulekh"
+42,Crop Production Details,Geo-coordinates,,,0,
 43,Crop Production Details,Land Type,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -931,42 +970,42 @@ WHERE `t_cropping_land_details`.`float_landholding_size` IS NOT NULL",,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`int_land_type`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`int_land_type`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`int_land_type`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`int_land_type`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`int_land_type`
 ELSE NULL 
 END AS self
 
 FROM `t_cropping_land_details` 
 
 
-WHERE `t_cropping_land_details`.`int_land_type` IS NOT NULL",,
-44,Crop Production Details,Farmer owns this land?,"SELECT DISTINCT 
+WHERE `t_cropping_land_details`.`int_land_type` IS NOT NULL",,0,"field,self"
+44,Crop Production Details,Farmer owns this land,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
 `t_cropping_land_details`.`vch_village`,
 `t_cropping_land_details`.`vch_khata_no`,
 `t_cropping_land_details`.`vch_plot_no`,
 
-CASE WHEN  `t_cropping_land_details`.`updated_at` <= ""2022-05-03""  THEN `t_cropping_land_details`.`int_own_land`
+CASE WHEN  `t_cropping_land_details`.`updated_at` <= '2202-05-03'  THEN `t_cropping_land_details`.`int_own_land`
 WHEN `t_cropping_land_details`.`updated_at` IS NULL   THEN  `t_cropping_land_details`.`int_own_land`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  `t_cropping_land_details`.`int_own_land`
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  `t_cropping_land_details`.`int_own_land`
 ELSE NULL 
 END AS self
 
 FROM `t_cropping_land_details` 
 
 
-WHERE `t_cropping_land_details`.`int_own_land` IS NOT NULL",,
-45,Crop Production Details,Kharif Crops,,,
-46,Crop Production Details,Rabi Crops,,,
-47,Crop Production Details,Summer/Zaid Crops,,,
+WHERE `t_cropping_land_details`.`int_own_land` IS NOT NULL",,0,"field,self"
+45,Crop Production Details,Kharif Crops,,,0,
+46,Crop Production Details,Rabi Crops,,,0,
+47,Crop Production Details,SummerZaid Crops,,,0,
 48,Crop Production Details,Access to Irrigation,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -995,7 +1034,7 @@ LEFT JOIN
 `full_irrigation_kharif` IS NOT NULL)  AS ama_krushi
 ON t_farmer_info.`vch_mobile_no` = ama_krushi.number
 
-WHERE `t_cropping_land_details`.`int_access_to_irrigation` IS NOT NULL",,
+WHERE `t_cropping_land_details`.`int_access_to_irrigation` IS NOT NULL",,1,"field,self,ama_krushi"
 49,Crop Production Details,Type of Irrigation,"SELECT DISTINCT 
 `t_cropping_land_details`.`vch_aadharno`,
 `t_cropping_land_details`.`vch_tahsil`,
@@ -1014,15 +1053,15 @@ END AS self,
 
 FROM `t_cropping_land_details` 
 
-WHERE `t_cropping_land_details`.`int_irrigation_type_id` IS NOT NULL",,
-50,Crop Production Details,Farm Equipment/Implements,"SELECT t_farmer_info.vch_aadharno , t_farmer_equipment_info.int_krushk_id, 
+WHERE `t_cropping_land_details`.`int_irrigation_type_id` IS NOT NULL",,0,"field,self"
+50,Crop Production Details,"Farm Equipment,Implements","SELECT t_farmer_info.vch_aadharno , t_farmer_equipment_info.int_krushk_id, 
 
-CASE WHEN  `t_farmer_equipment_info`.`updated_at` <= ""2022-05-03""  THEN lower(m_farm_equipment.vch_equipment_name)
+CASE WHEN  `t_farmer_equipment_info`.`updated_at` <= '2202-05-03'  THEN lower(m_farm_equipment.vch_equipment_name)
 WHEN `t_farmer_equipment_info`.`updated_at` IS NULL   THEN  lower(m_farm_equipment.vch_equipment_name)
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_cropping_land_details`.`updated_at` > ""2022-05-03""   THEN  lower(m_farm_equipment.vch_equipment_name)
+CASE WHEN `t_cropping_land_details`.`updated_at` > '2202-05-03'   THEN  lower(m_farm_equipment.vch_equipment_name)
 ELSE NULL 
 END AS self,
 lower(`mkuy_farmer_dbt_list`.`implement`) as mkuy
@@ -1039,24 +1078,24 @@ lower(`mkuy_farmer_dbt_list`.`implement`) as mkuy
 	ON `mkuy_farmer_dbt_list`.`farmer_id` = `mkuy_data`.`nic_farmerid`
 	WHERE `mkuy_farmer_dbt_list`.`implement` IS NOT NULL
 	AND `mkuy_data`.`decrypted_aadhar` IS NOT NULL
-	-- AND `mkuy_farmer_dbt_list`.`dist` = 'ANGUL'
+
 ) `mkuy_farmer_dbt_list`
 
 ON t_farmer_info.vch_aadharno =  `mkuy_farmer_dbt_list`.`decrypted_aadhar`
-WHERE m_farm_equipment.vch_equipment_name IS NOT NULL ",,
-51,Crop Production Details,Farming Practice,,,
+WHERE m_farm_equipment.vch_equipment_name IS NOT NULL ",,1,"field,self,mkuy"
+51,Crop Production Details,Farming Practice,,,0,"field,self"
 52,Animal Production Details,Owns Large Animals,"SELECT ,`int_krushk_id` ,
-CASE WHEN  `t_animal_production_details`.`updated_at` <= ""2022-05-03""  THEN `t_animal_production_details`.`int_own_large_animal`
+CASE WHEN  `t_animal_production_details`.`updated_at` <= '2202-05-03'  THEN `t_animal_production_details`.`int_own_large_animal`
 WHEN `t_animal_production_details`.`updated_at` IS NULL   THEN  `t_animal_production_details`.`int_own_large_animal`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_animal_production_details`.`updated_at` > ""2022-05-03""   THEN  `t_animal_production_details`.`int_own_large_animal`
+CASE WHEN `t_animal_production_details`.`updated_at` > '2202-05-03'   THEN  `t_animal_production_details`.`int_own_large_animal`
 ELSE NULL 
 END AS self
- FROM `t_animal_production_details`",,
-53,Animal Production Details,Type of Large Animals,,,
-54,Animal Production Details,No. of Large Animals,"SELECT `t_animal_production_details`.`int_krushk_id`,
+ FROM `t_animal_production_details`",,0,"field,self"
+53,Animal Production Details,Type of Large Animals,,,0,"field,self"
+54,Animal Production Details,No of Large Animals,"SELECT `t_animal_production_details`.`int_krushk_id`,
 CASE WHEN  `t_animal_production_details`.`updated_at` <= '2022-05-03'  THEN `t_animal_production_details`.`count_animals`
 WHEN `t_animal_production_details`.`updated_at` IS NULL   THEN  `t_animal_production_details`.`count_animals`
 ELSE NULL 
@@ -1077,19 +1116,19 @@ ON t_farmer_asset_animal_info.int_animal_master_id = m_animal_production.int_ani
 WHERE `m_animal_production`.`vch_animal_category` = 'large'
 AND int_krushk_id IS NOT NULL
 
-LIMIT 10) `t_animal_production_details` ",,
-55,Animal Production Details,Animal Tag,,,
+LIMIT 10) `t_animal_production_details` ",,0,"field,self"
+55,Animal Production Details,Animal Tag,,,0,"field,self"
 56,Animal Production Details,Owns Small Animals,"SELECT ,`int_krushk_id` ,
-CASE WHEN  `t_animal_production_details`.`updated_at` <= ""2022-05-03""  THEN `t_animal_production_details`.`int_own_small_animal`
+CASE WHEN  `t_animal_production_details`.`updated_at` <= '2202-05-03'  THEN `t_animal_production_details`.`int_own_small_animal`
 WHEN `t_animal_production_details`.`updated_at` IS NULL   THEN  `t_animal_production_details`.`int_own_small_animal`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_animal_production_details`.`updated_at` > ""2022-05-03""   THEN  `t_animal_production_details`.`int_own_small_animal`
+CASE WHEN `t_animal_production_details`.`updated_at` > '2202-05-03'   THEN  `t_animal_production_details`.`int_own_small_animal`
 ELSE NULL 
 END AS self
- FROM `t_animal_production_details`",,
-57,Animal Production Details,Type of Small Animals,,,
+ FROM `t_animal_production_details`",,0,"field,self"
+57,Animal Production Details,Type of Small Animals,,,0,"field,self"
 58,Animal Production Details,No of Small Animals,"
 SELECT `t_animal_production_details`.`int_krushk_id`,
 CASE WHEN  `t_animal_production_details`.`updated_at` <= '2022-05-03'  THEN `t_animal_production_details`.`count_animals`
@@ -1112,52 +1151,14 @@ ON t_farmer_asset_animal_info.int_animal_master_id = m_animal_production.int_ani
 WHERE `m_animal_production`.`vch_animal_category` = 'small'
 AND int_krushk_id IS NOT NULL
 GROUP BY  1,2
-) `t_animal_production_details` ",,
+) `t_animal_production_details` ",,0,"field,self"
 59,Animal Production Details,Owns Poultry,"SELECT ,`int_krushk_id` ,
-CASE WHEN  `t_animal_production_details`.`updated_at` <= ""2022-05-03""  THEN `t_animal_production_details`.`int_own_poultry`
+CASE WHEN  `t_animal_production_details`.`updated_at` <= '2202-05-03'  THEN `t_animal_production_details`.`int_own_poultry`
 WHEN `t_animal_production_details`.`updated_at` IS NULL   THEN  `t_animal_production_details`.`int_own_poultry`
 ELSE NULL 
 END AS field  ,
 
-CASE WHEN `t_animal_production_details`.`updated_at` > ""2022-05-03""   THEN  `t_animal_production_details`.`int_own_poultry`
+CASE WHEN `t_animal_production_details`.`updated_at` > '2202-05-03'   THEN  `t_animal_production_details`.`int_own_poultry`
 ELSE NULL 
 END AS self
- FROM `t_animal_production_details`",,
-60,Animal Production Details,Type of Production,,,
-61,Animal Production Details,Total No. of Birds (Egg Production),,,
-62,Animal Production Details,Total No. of Birds (Meat Production),,,
-63,Fishing/Aquaculture Details,Type of Fishery,,,
-64,Fishing/Aquaculture Details,Freshwater - Type of Freshwater Fishery,,,
-65,Fishing/Aquaculture Details,Freshwater - Type of Water Body,,,
-66,Fishing/Aquaculture Details,Freshwater - Type of Boat,,,
-67,Fishing/Aquaculture Details,Freshwater - Number of Boats,,,
-68,Fishing/Aquaculture Details,Freshwater - No of ponds,,,
-69,Fishing/Aquaculture Details,Freshwater - Total Area under the ponds (Acres),,,
-70,Fishing/Aquaculture Details,Brackish - Type of Brackishwater Fishery,,,
-71,Fishing/Aquaculture Details,Brackish - Fishing in Chillika Lagoon,,,
-72,Fishing/Aquaculture Details,Brackish - Type of Boat,,,
-73,Fishing/Aquaculture Details,Brackish - Number of Boats,,,
-74,Fishing/Aquaculture Details,Brackish - Number of ponds,,,
-75,Fishing/Aquaculture Details,Brackish - Total Area under the ponds (Acres),,,
-76,Fishing/Aquaculture Details,Marine - Type of Boat,,,
-77,Fishing/Aquaculture Details,Marine - Number of Boats,,,
-78,Forestry,Dependency on Type of Forest,,,
-79,Forestry,District,,,
-80,Forestry,Block,,,
-81,Forestry,GP,,,
-82,Forestry,Village,,,
-83,Forestry,Case No.,,,
-84,Forestry,Area (Acres),,,
-85,Forestry,Forest Produce,,,
-86,Forestry,Kharif Crops,,,
-87,Forestry,Rabi Crops,,,
-88,Forestry,Summer/Zaid Crops,,,
-89,Forestry,Access to Irrigation,,,
-90,Forestry,Type of Irrigation,,,
-91,Documents,Registered Sale Deed,,,
-92,Documents,Caste Certificate,,,
-93,Farmer's Declaration,Farmer's Declaration,,,
-94,Farmer's Consent,Farmer's Consent,,,
-95,Farmer ID,Farmer ID,,,
-96,Source,Source of farmer,,,
-97,Source,Farmer Registration,,,
+ FROM `t_animal_production_details`",,0,"field,self"
